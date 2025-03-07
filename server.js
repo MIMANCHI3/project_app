@@ -59,7 +59,8 @@ app.post('/api/update', (req, res) => {
 });
 
 // 启动服务
-const PORT = process.env.PORT || 3000;
+// server.js
+const PORT = process.env.PORT || 3000; // 必须使用此格式
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
