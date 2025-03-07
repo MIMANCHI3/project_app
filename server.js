@@ -50,7 +50,7 @@ app.get('/api/schedule', (req, res) => {
 app.post('/api/update', (req, res) => {
   const { table_id,week, day, status } = req.body;
   db.run(
-    `UPDATE schedule SET status = ? WHERE week = ? AND day = ?`,
+    `UPDATE schedule SET status = ? WHERE table_id = ? AND week = ? AND day = ?`,
     [status,table_id, week, day],
     (err) => {
       if (err) return res.status(500).send(err);
