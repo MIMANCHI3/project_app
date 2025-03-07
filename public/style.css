@@ -60,7 +60,20 @@ p {
   font-size: 22px;
   color: #333;
 }
+/* 图片容器 */
+.image-container {
+  text-align: right; /* 右对齐 */
+  margin: 20px 0; /* 上下留白 */
+}
 
+/* 响应式图片 */
+.responsive-image {
+  width: 90vw; /* 宽度为视口宽度的90% */
+  max-width: 100%; /* 最大宽度不超过容器 */
+  height: auto; /* 高度自适应 */
+  display: inline-block; /* 行内块元素 */
+  margin: 0; /* 移除外边距 */
+}
 /* 链接样式 */
 a {
   color: #007bff; /* 蓝色链接 */
