@@ -15,6 +15,7 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS schedule (
       id INTEGER PRIMARY KEY,
+      table_id INTEGER NOT NULL DEFAULT 1, -- 添加 table_id 字段
       week INTEGER NOT NULL,
       day TEXT NOT NULL,
       status TEXT DEFAULT 'free'
@@ -25,12 +26,15 @@ db.serialize(() => {
   const weeks = Array.from({ length: 20 }, (_, i) => i + 3);
   const days = ['一', '二', '三', '四', '五', '六', '日'];
 
-  weeks.forEach((week) => {
-    days.forEach((day) => {
-      db.run(
-        `INSERT OR IGNORE INTO schedule (week, day, status) VALUES (?, ?, ?)`,
-        [week, day, 'free']
-      );
+  // 为两个表格初始化数据
+  [1, 2].forEach(tableId => {
+    weeks.forEach((week) => {
+      days.forEach((day) => {
+        db.run(
+          `INSERT OR IGNORE INTO schedule (table_id, week, day, status) VALUES (?, ?, ?, ?)`,
+          [tableId, week, day, 'free']
+        );
+      });
     });
   });
 });
