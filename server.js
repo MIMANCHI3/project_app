@@ -38,7 +38,7 @@ db.serialize(() => {
 // API：获取所有数据
 app.get('/api/schedule', (req, res) => {
   db.all(
-    `SELECT table_id, week, day, status FROM schedule ORDER BY week, day`,
+    `SELECT table_id, week, day, status FROM schedule ORDER BY table_id, week, day`,
     (err, rows) => {
       if (err) return res.status(500).send(err);
       res.json(rows);
