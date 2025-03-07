@@ -1,14 +1,35 @@
 async function loadSchedule() {
   const res = await fetch('/api/schedule');
   const data = await res.json();
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
 
+  // 填充第一个表格
+  const grid1 = document.getElementById('grid1');
+  grid1.innerHTML = '';
+  populateSchedule(grid1, data);
+
+  // 填充第二个表格
+  const grid2 = document.getElementById('grid2');
+  grid2.innerHTML = '';
+  populateSchedule(grid2, data);
+
+  // 如果是管理员页面，启用编辑
+  if (window.location.pathname === '/admin.html') {
+    // 为第一个表格添加编辑功能
+    addEditFunctionality('grid1', data);
+
+    // 为第二个表格添加编辑功能
+    addEditFunctionality('grid2', data);
+  }
+}
+
+// 填充表格的函数
+function populateSchedule(grid, data) {
   // 按周分组
   const weeks = [...new Set(data.map(item => item.week))].sort((a, b) => a - b);
   weeks.forEach((week) => {
     const row = document.createElement('tr');
     row.innerHTML = `<td>第${week}周</td>`;
+    
     // 根据周数计算起始日期（假设学期起始日期为2025-03-03，第3周）
     const startDate = new Date(2025, 2, 3 + (week - 3) * 7); // 月份从0开始（2表示3月）
 
@@ -32,24 +53,25 @@ async function loadSchedule() {
     });
     grid.appendChild(row);
   });
+}
 
-  // 如果是管理员页面，启用编辑
-  if (window.location.pathname === '/admin.html') {
-    document.querySelectorAll('.cell').forEach(cell => {
-      cell.style.cursor = 'pointer';
-      cell.addEventListener('click', async () => {
-        const week = parseInt(cell.parentNode.firstChild.textContent.match(/\d+/)[0]);
-        const day = ['一', '二', '三', '四', '五', '六', '日'][cell.cellIndex - 1];
-        const newStatus = cell.classList.contains('free') ? 'booked' : 'free';
-        cell.className = `cell ${newStatus}`;
-        await fetch('/api/update', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ week, day, status: newStatus })
-        });
+// 启用编辑功能的函数
+function addEditFunctionality(gridId, data) {
+  const grid = document.getElementById(gridId);
+  grid.querySelectorAll('.cell').forEach(cell => {
+    cell.style.cursor = 'pointer';
+    cell.addEventListener('click', async () => {
+      const week = parseInt(cell.parentNode.firstChild.textContent.match(/\d+/)[0]);
+      const day = ['一', '二', '三', '四', '五', '六', '日'][cell.cellIndex - 1];
+      const newStatus = cell.classList.contains('free') ? 'booked' : 'free';
+      cell.className = `cell ${newStatus}`;
+      await fetch('/api/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ week, day, status: newStatus })
       });
     });
-  }
+  });
 }
 
 loadSchedule();
