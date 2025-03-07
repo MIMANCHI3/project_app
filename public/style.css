@@ -53,7 +53,23 @@ th {
   left: 2px;
   color: #666;
 }
+/* 左对齐段落 */
+p {
+  text-align: left;
+  margin: 10px 0;
+  font-size: 18px;
+  color: #333;
+}
 
+/* 链接样式 */
+a {
+  color: #007bff; /* 蓝色链接 */
+  text-decoration: none; /* 去掉下划线 */
+}
+
+a:hover {
+  text-decoration: underline; /* 鼠标悬停时显示下划线 */
+}s
 .status {
   font-size: 20px;
   margin-top: 10px;
