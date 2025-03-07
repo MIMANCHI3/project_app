@@ -5,11 +5,17 @@
   <title>预约表查看</title>
 </head>
 <body>
-  <h1>人大附中ICC艺术空间预约表</h1>
-  <table id="schedule">
+<!-- 插入第一个表格上方的图片 -->
+  <div id="image-top" style="text-align: center;">
+    <img src="2.png" alt="First Image" style="width:70%;height: auto; display: block; margin: auto; ">
+  </div>
+  <h1>ICC楼一层大厅</h1>
+  
+  <!-- 第一个表格 -->
+  <table id="schedule1">
     <thead>
       <tr>
-        <th>周次</th>
+        <th>周次/星期</th>
         <th>一</th>
         <th>二</th>
         <th>三</th>
@@ -19,8 +25,33 @@
         <th>日</th>
       </tr>
     </thead>
-    <tbody id="grid"></tbody>
+    <tbody id="grid1"></tbody>
   </table>
+
+  <!-- 第二个表格 -->
+  <h1> </h1>
+  <h1> </h1>
+
+  <h1>ICC楼1-6层楼梯间</h1>
+  <table id="schedule2">
+    <thead>
+      <tr>
+        <th>周次/星期</th>
+        <th>一</th>
+        <th>二</th>
+        <th>三</th>
+        <th>四</th>
+        <th>五</th>
+        <th>六</th>
+        <th>日</th>
+      </tr>
+    </thead>
+    <tbody id="grid2"></tbody>
+  </table>
+<div id="image-top" style="text-align: center;">
+    <img src="3.png" alt="First Image" style="width:60%; height: auto; display: block; margin: auto;">
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
