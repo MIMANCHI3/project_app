@@ -3,8 +3,8 @@ const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const app = express();
 // server.js
-const db = new sqlite3.Database('db.sqlite'); // 持久化数据库
-
+//const db = new sqlite3.Database('db.sqlite'); // 持久化数据库
+const db = new sqlite3.Database(':memory:'); // 替换原有数据库配置
 // 启用CORS和JSON解析
 app.use(cors());
 app.use(express.json());
