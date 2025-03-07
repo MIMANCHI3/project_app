@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const app = express();
 // server.js
-const db = new sqlite3.Database('data.db'); // 使用自定义文件名（非默认的db.sqlite）
+const db = new sqlite3.Database('db.sqlite'); // 持久化数据库
 
 // 启用CORS和JSON解析
 app.use(cors());
@@ -61,7 +61,12 @@ app.post('/api/update', (req, res) => {
 
 // 启动服务
 // server.js
-const PORT = process.env.PORT || 3000; // 必须使用此格式
+//const PORT = process.env.PORT || 3000; // 必须使用此格式
+//app.listen(PORT, () => {
+//  console.log(`Server running on port ${PORT}`);
+//});
+// 启动服务
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
