@@ -5,20 +5,24 @@ async function loadSchedule() {
   // 填充第一个表格
   const grid1 = document.getElementById('grid1');
   grid1.innerHTML = '';
-  populateSchedule(grid1, data);
+  //populateSchedule(grid1, data);
+  populateSchedule(grid1, data.filter(item => item.table_id === 1)); // 只填充 table_id=1 的数据
 
   // 填充第二个表格
   const grid2 = document.getElementById('grid2');
   grid2.innerHTML = '';
-  populateSchedule(grid2, data);
+  //populateSchedule(grid2, data);
+  populateSchedule(grid2, data.filter(item => item.table_id === 2)); // 只填充 table_id=2 的数据
 
   // 如果是管理员页面，启用编辑
   if (window.location.pathname === '/admin.html') {
     // 为第一个表格添加编辑功能
-    addEditFunctionality('grid1', data);
+    //addEditFunctionality('grid1', data);
+    addEditFunctionality('grid1', 1, data);
 
     // 为第二个表格添加编辑功能
-    addEditFunctionality('grid2', data);
+    //addEditFunctionality('grid2', data);
+    addEditFunctionality('grid2', 2, data);
   }
 }
 
