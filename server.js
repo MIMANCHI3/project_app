@@ -48,10 +48,10 @@ app.get('/api/schedule', (req, res) => {
 
 // API：更新状态（管理员用）
 app.post('/api/update', (req, res) => {
-  const { week, day, status } = req.body;
+  const { table_id,week, day, status } = req.body;
   db.run(
     `UPDATE schedule SET status = ? WHERE week = ? AND day = ?`,
-    [status, week, day],
+    [status,table_id, week, day],
     (err) => {
       if (err) return res.status(500).send(err);
       res.sendStatus(200);
