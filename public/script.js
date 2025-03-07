@@ -56,7 +56,7 @@ function populateSchedule(grid, data) {
 }
 
 // 启用编辑功能的函数
-function addEditFunctionality(gridId, data) {
+function addEditFunctionality(gridId, tableId, data) {
   const grid = document.getElementById(gridId);
   grid.querySelectorAll('.cell').forEach(cell => {
     cell.style.cursor = 'pointer';
@@ -68,7 +68,7 @@ function addEditFunctionality(gridId, data) {
       await fetch('/api/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ week, day, status: newStatus })
+        body: JSON.stringify({ table_id: tableId, week, day, status: newStatus })
       });
     });
   });
