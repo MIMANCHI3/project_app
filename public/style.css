@@ -35,12 +35,12 @@ th {
 .cell {
   position: relative;
   cursor: default;
-  background-color: white;
+  background-color: #dbf3cf;
   height: 60px;
 }
 
 .cell.booked {
-  background-color: #333;
+  background-color: #D3D3D3;
   color: white;
 }
 
