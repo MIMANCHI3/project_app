@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <link rel="stylesheet" href="style.css">
   <title>管理员编辑</title>
 </head>
@@ -41,6 +42,10 @@
     <tbody id="grid2"></tbody>
   </table>
 
-  <script src="script.js"></script>
+  <!-- 明确告知脚本这是管理员页面，确保在 GitHub Pages 下也能识别 -->
+  <script>
+    window.IS_ADMIN_PAGE = true;
+  </script>
+  <script src="./script.js"></script>
 </body>
 </html>
