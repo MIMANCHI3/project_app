@@ -1,501 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 引入 LeanCloud SDK -->
-    <script src="https://cdn1.lncld.net/static/js/3.18.2/av-min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
-    <script>
-  // 初始化 LeanCloud SDK
-      var APP_ID = 'YkGU3OKGHmv6fK3qYxuzWjLc-gzGzoHsz';
-      var APP_KEY = 'dvQRjtHtiUwxceLonRilMbWp';
-      var SERVER_URL = 'https://ykgu3okg.lc-cn-n1-shared.com'; // 国内版应用必须设置
-
-      AV.init({
-        appId: APP_ID,
-        appKey: APP_KEY,
-        serverURL: SERVER_URL
-      });
-    </script>
-    <title>Project Admin</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f5f7fa;
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        header {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        h1 {
-            margin-bottom: 10px;
-            font-size: 2.2rem;
-        }
-        
-        .subtitle {
-            font-weight: 300;
-            opacity: 0.9;
-        }
-        
-        .controls {
-            padding: 15px 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #eaecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary {
-            background: #4c84ff;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #3a6fd9;
-        }
-        
-        .btn-success {
-            background: #34c759;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #2ca44f;
-        }
-        
-        .table-container {
-            overflow-x: auto;
-            padding: 20px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
-        
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #eaecef;
-        }
-        
-        th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-        }
-        
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-        
-        td {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        td:hover {
-            background-color: #e6f7ff;
-        }
-        
-        .editable-cell {
-            position: relative;
-        }
-        
-        .edit-input {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 12px 15px;
-            border: 2px solid #4c84ff;
-            border-radius: 4px;
-            outline: none;
-            font-size: 1rem;
-            box-shadow: 0 0 5px rgba(76, 132, 255, 0.5);
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-        
-        .status-active {
-            background: #e6f7e6;
-            color: #2ca44f;
-        }
-        
-        .status-pending {
-            background: #fff5e6;
-            color: #e67e22;
-        }
-        
-        .status-completed {
-            background: #e6f0ff;
-            color: #4c84ff;
-        }
-        
-        .progress-bar {
-            height: 8px;
-            background: #eaecef;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 5px;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #6a11cb, #2575fc);
-            border-radius: 4px;
-        }
-        
-        footer {
-            text-align: center;
-            padding: 20px;
-            color: #6c757d;
-            font-size: 0.9rem;
-            border-top: 1px solid #eaecef;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 6px;
-            background: #34c759;
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transform: translateX(100%);
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-        
-        .notification.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-                gap: 10px;
-                align-items: flex-start;
-            }
-            
-            th, td {
-                padding: 8px 10px;
-            }
-        }
-    </style>
+  <link rel="stylesheet" href="style.css">
+  <title>管理员编辑</title>
+  <!-- 新增：引入 LeanCloud SDK -->
+  <script src="https://cdn1.lncld.net/static/js/3.18.2/av-min.js"></script>
+  <style>
+    /* 新增：简单的按钮样式 */
+    .admin-controls {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .admin-btn {
+      padding: 10px 20px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 4px;
+      background-color: #4a90e2;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .admin-btn:hover {
+      background-color: #357abD;
+    }
+    #saveStatus {
+      margin-top: 10px;
+      color: #666;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Project Management Dashboard</h1>
-            <p class="subtitle">Admin Panel - Click on any cell to edit</p>
-        </header>
-        
-        <div class="controls">
-            <div>
-                <button class="btn btn-primary" id="addRow">Add New Row</button>
-                <button class="btn btn-success" id="resetData">Reset to Default</button>
-            </div>
-            <div>
-                <span id="lastSaved"></span>
-            </div>
-        </div>
-        
-        <div class="table-container">
-            <table id="projectTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Project</th>
-                        <th>Assignee</th>
-                        <th>Status</th>
-                        <th>Progress</th>
-                        <th>Due Date</th>
-                        <th>Notes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Table rows will be generated by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-        
-        <footer>
-            <p>© 2023 Project Management Dashboard | Changes are saved automatically to your browser's local storage</p>
-        </footer>
-    </div>
-    
-    <div class="notification" id="notification">Changes saved successfully!</div>
+  <h1>管理员编辑模式</h1>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Sample data structure
-            const defaultData = [
-                {
-                    id: 1,
-                    project: "Website Redesign",
-                    assignee: "John Doe",
-                    status: "In Progress",
-                    progress: 60,
-                    dueDate: "2023-12-31",
-                    notes: "Working on responsive design"
-                },
-                {
-                    id: 2,
-                    project: "Mobile App Development",
-                    assignee: "Jane Smith",
-                    status: "Pending",
-                    progress: 20,
-                    dueDate: "2024-02-15",
-                    notes: "Waiting for client approval"
-                },
-                {
-                    id: 3,
-                    project: "Database Migration",
-                    assignee: "Robert Johnson",
-                    status: "Completed",
-                    progress: 100,
-                    dueDate: "2023-11-10",
-                    notes: "Successfully migrated to new server"
-                },
-                {
-                    id: 4,
-                    project: "SEO Optimization",
-                    assignee: "Emily Davis",
-                    status: "In Progress",
-                    progress: 75,
-                    dueDate: "2024-01-20",
-                    notes: "Keywords analysis completed"
-                },
-                {
-                    id: 5,
-                    project: "Payment Integration",
-                    assignee: "Michael Wilson",
-                    status: "Pending",
-                    progress: 10,
-                    dueDate: "2024-03-05",
-                    notes: "Researching payment gateways"
-                }
-            ];
-            
-            const tableBody = document.querySelector('#projectTable tbody');
-            const lastSavedSpan = document.getElementById('lastSaved');
-            const notification = document.getElementById('notification');
-            let projectData = [];
-            
-            // Initialize the page
-            function init() {
-                loadData();
-                renderTable();
-                updateLastSaved();
-                
-                // Add event listeners to buttons
-                document.getElementById('addRow').addEventListener('click', addNewRow);
-                document.getElementById('resetData').addEventListener('click', resetData);
-            }
-            
-            // Load data from localStorage or use default
-            function loadData() {
-                const savedData = localStorage.getItem('projectData');
-                if (savedData) {
-                    projectData = JSON.parse(savedData);
-                } else {
-                    projectData = JSON.parse(JSON.stringify(defaultData));
-                    saveData();
-                }
-            }
-            
-            // Save data to localStorage
-            function saveData() {
-                localStorage.setItem('projectData', JSON.stringify(projectData));
-                updateLastSaved();
-                showNotification();
-            }
-            
-            // Update the "last saved" timestamp
-            function updateLastSaved() {
-                const now = new Date();
-                lastSavedSpan.textContent = `Last saved: ${now.toLocaleTimeString()}`;
-            }
-            
-            // Show notification
-            function showNotification() {
-                notification.classList.add('show');
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
-            }
-            
-            // Render the table with current data
-            function renderTable() {
-                tableBody.innerHTML = '';
-                
-                projectData.forEach(row => {
-                    const tr = document.createElement('tr');
-                    
-                    // Add ID cell
-                    tr.innerHTML = `
-                        <td class="editable-cell" data-field="id">${row.id}</td>
-                        <td class="editable-cell" data-field="project">${row.project}</td>
-                        <td class="editable-cell" data-field="assignee">${row.assignee}</td>
-                        <td class="editable-cell" data-field="status">${getStatusBadge(row.status)}</td>
-                        <td class="editable-cell" data-field="progress">
-                            ${row.progress}%
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${row.progress}%"></div>
-                            </div>
-                        </td>
-                        <td class="editable-cell" data-field="dueDate">${formatDate(row.dueDate)}</td>
-                        <td class="editable-cell" data-field="notes">${row.notes}</td>
-                    `;
-                    
-                    tableBody.appendChild(tr);
-                });
-                
-                // Add click event listeners to all cells
-                document.querySelectorAll('.editable-cell').forEach(cell => {
-                    cell.addEventListener('click', handleCellClick);
-                });
-            }
-            
-            // Format date for display
-            function formatDate(dateString) {
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                return new Date(dateString).toLocaleDateString(undefined, options);
-            }
-            
-            // Get status badge HTML
-            function getStatusBadge(status) {
-                const statusClass = status.toLowerCase().replace(' ', '-');
-                return `<span class="status-badge status-${statusClass}">${status}</span>`;
-            }
-            
-            // Handle cell click event
-            function handleCellClick(e) {
-                const cell = e.target.closest('.editable-cell');
-                if (!cell) return;
-                
-                const field = cell.getAttribute('data-field');
-                const rowIndex = Array.from(cell.parentNode.parentNode.children).indexOf(cell.parentNode);
-                const currentValue = projectData[rowIndex][field];
-                
-                // For ID field, don't allow editing
-                if (field === 'id') {
-                    alert('ID field cannot be edited');
-                    return;
-                }
-                
-                // For status field, provide a dropdown
-                if (field === 'status') {
-                    const newStatus = prompt('Enter new status (In Progress, Pending, Completed):', currentValue);
-                    if (newStatus !== null) {
-                        projectData[rowIndex][field] = newStatus;
-                        saveData();
-                        renderTable();
-                    }
-                    return;
-                }
-                
-                // For progress field, validate input
-                if (field === 'progress') {
-                    const newProgress = prompt('Enter progress (0-100):', currentValue);
-                    if (newProgress !== null) {
-                        const progressValue = parseInt(newProgress);
-                        if (!isNaN(progressValue) && progressValue >= 0 && progressValue <= 100) {
-                            projectData[rowIndex][field] = progressValue;
-                            saveData();
-                            renderTable();
-                        } else {
-                            alert('Please enter a number between 0 and 100');
-                        }
-                    }
-                    return;
-                }
-                
-                // For other fields, use simple text input
-                const newValue = prompt(`Enter new ${field}:`, currentValue);
-                if (newValue !== null) {
-                    projectData[rowIndex][field] = newValue;
-                    saveData();
-                    renderTable();
-                }
-            }
-            
-            // Add a new row to the table
-            function addNewRow() {
-                const newId = projectData.length > 0 ? Math.max(...projectData.map(item => item.id)) + 1 : 1;
-                
-                projectData.push({
-                    id: newId,
-                    project: "New Project",
-                    assignee: "Unassigned",
-                    status: "Pending",
-                    progress: 0,
-                    dueDate: new Date().toISOString().split('T')[0],
-                    notes: "Add notes here"
-                });
-                
-                saveData();
-                renderTable();
-            }
-            
-            // Reset data to default
-            function resetData() {
-                if (confirm('Are you sure you want to reset all data to default? This cannot be undone.')) {
-                    projectData = JSON.parse(JSON.stringify(defaultData));
-                    saveData();
-                    renderTable();
-                }
-            }
-            
-            // Initialize the application
-            init();
-        });
-    </script>
+  <!-- 新增：管理按钮 -->
+  <div class="admin-controls">
+    <button class="admin-btn" id="initBtn">初始化/重置本周数据</button>
+    <div id="saveStatus">点击单元格即可编辑，状态会自动保存到云端。</div>
+  </div>
+
+  <!-- 第一个表格 -->
+  <table id="schedule1">
+    <thead>
+      <tr>
+        <th>周次/星期</th>
+        <th>一</th>
+        <th>二</th>
+        <th>三</th>
+        <th>四</th>
+        <th>五</th>
+        <th>六</th>
+        <th>日</th>
+      </tr>
+    </thead>
+    <tbody id="grid1"></tbody>
+  </table>
+
+  <!-- 第二个表格 -->
+  <table id="schedule2">
+    <thead>
+      <tr>
+        <th>周次/星期</th>
+        <th>一</th>
+        <th>二</th>
+        <th>三</th>
+        <th>四</th>
+        <th>五</th>
+        <th>六</th>
+        <th>日</th>
+      </tr>
+    </thead>
+    <tbody id="grid2"></tbody>
+  </table>
+
+  <!-- 注意：script.js 需要在 LeanCloud SDK 之后引入 -->
+  <script src="script.js"></script>
 </body>
 </html>
