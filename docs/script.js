@@ -1,60 +1,100 @@
-// script.js - 集成 LeanCloud
+// script.js - 集成 LeanCloud (修复版)
 
 // 初始化 LeanCloud SDK
 var APP_ID = 'YkGU3OKGHmv6fK3qYxuzWjLc-gzGzoHsz';
 var APP_KEY = 'dvQRjtHtiUwxceLonRilMbWp';
 var SERVER_URL = 'https://ykgu3okg.lc-cn-n1-shared.com';
 
-AV.init({
-  appId: APP_ID,
-  appKey: APP_KEY,
-  serverURL: SERVER_URL
+// 等待页面完全加载后再执行
+document.addEventListener('DOMContentLoaded', function() {
+  // 初始化 LeanCloud
+  if (typeof AV !== 'undefined') {
+    AV.init({
+      appId: APP_ID,
+      appKey: APP_KEY,
+      serverURL: SERVER_URL
+    });
+    
+    // 启动应用
+    setTimeout(initApplication, 100); // 稍等片刻确保SDK完全加载
+  } else {
+    console.error('LeanCloud SDK 未正确加载');
+    // 可以在这里添加回退到本地存储的逻辑
+  }
 });
 
-const SEMESTER_START = new Date(2025, 8, 1);
-const TOTAL_WEEKS = 22;
-const DAYS = ['一', '二', '三', '四', '五', '六', '日'];
+function initApplication() {
+  const SEMESTER_START = new Date(2025, 8, 1);
+  const TOTAL_WEEKS = 22;
+  const DAYS = ['一', '二', '三', '四', '五', '六', '日'];
 
-// 主加载函数
-async function loadSchedule() {
-  // 获取当前周数（例如，第几周）
-  const currentWeek = calculateCurrentWeek();
-  document.getElementById('saveStatus').innerText = `当前是第 ${currentWeek} 周。点击单元格编辑，状态会自动保存。`;
-
-  try {
-    // 并行获取两个表格的数据
-    const [data1, data2] = await Promise.all([
-      fetchDataFromLeanCloud(1),
-      fetchDataFromLeanCloud(2)
-    ]);
-
-    renderSchedule('grid1', data1);
-    renderSchedule('grid2', data2);
-
-    // 如果是管理员页面，添加编辑功能
-    if (isAdminPage()) {
-      addEditFunctionality('grid1', 1);
-      addEditFunctionality('grid2', 2);
-      document.getElementById('initBtn').addEventListener('click', () => initCurrentWeekData(currentWeek));
-    }
-  } catch (error) {
-    console.error("加载数据失败:", error);
-    alert('加载数据失败，请查看控制台日志或检查网络连接。');
+  // 只在 admin 页面显示的状态消息
+  const saveStatusEl = document.getElementById('saveStatus');
+  if (saveStatusEl) {
+    const currentWeek = calculateCurrentWeek();
+    saveStatusEl.innerText = `当前是第 ${currentWeek} 周。点击单元格编辑，状态会自动保存。`;
   }
+
+  // 加载日程数据
+  loadSchedule();
+
+  // 如果是管理员页面，添加编辑功能
+  if (isAdminPage()) {
+    // 确保按钮存在再添加事件监听
+    const initBtn = document.getElementById('initBtn');
+    const resetBtn = document.getElementById('resetAllBtn');
+    
+    if (initBtn) {
+      initBtn.addEventListener('click', function() {
+        const currentWeek = calculateCurrentWeek();
+        initCurrentWeekData(currentWeek);
+      });
+    }
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        if (confirm('确定要重置所有数据吗？此操作不可撤销！')) {
+          resetAllData();
+        }
+      });
+    }
+  }
+}
+
+// 计算当前周数
+function calculateCurrentWeek() {
+  const now = new Date();
+  const start = new Date(SEMESTER_START);
+  const diffTime = now - start;
+  const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+  return Math.max(1, Math.min(diffWeeks + 1, TOTAL_WEEKS));
+}
+
+// 检查是否为管理员页面
+function isAdminPage() {
+  return window.location.pathname.includes('admin');
 }
 
 // 从 LeanCloud 获取数据
 async function fetchDataFromLeanCloud(tableId) {
-  const ClassName = tableId === 1 ? 'Schedule1' : 'Schedule2';
-  const query = new AV.Query(ClassName);
-  // 可以根据需要添加更多查询条件，例如只获取当前周或未来的数据以优化性能
-  // query.greaterThanOrEqualTo('week', currentWeek);
-  return await query.find();
+  try {
+    const ClassName = tableId === 1 ? 'Schedule1' : 'Schedule2';
+    const query = new AV.Query(ClassName);
+    return await query.find();
+  } catch (error) {
+    console.error('从LeanCloud获取数据失败:', error);
+    return [];
+  }
 }
 
 // 渲染表格
-function renderSchedule(gridId, data) {
+async function renderSchedule(gridId, data) {
   const grid = document.getElementById(gridId);
+  if (!grid) {
+    console.error(`找不到元素 #${gridId}`);
+    return;
+  }
+  
   grid.innerHTML = '';
 
   for (let week = 1; week <= TOTAL_WEEKS; week++) {
@@ -91,12 +131,37 @@ function renderSchedule(gridId, data) {
   }
 }
 
+// 加载日程
+async function loadSchedule() {
+  try {
+    // 并行获取两个表格的数据
+    const [data1, data2] = await Promise.all([
+      fetchDataFromLeanCloud(1),
+      fetchDataFromLeanCloud(2)
+    ]);
+
+    // 渲染表格
+    await renderSchedule('grid1', data1);
+    await renderSchedule('grid2', data2);
+
+    // 如果是管理员页面，添加编辑功能
+    if (isAdminPage()) {
+      addEditFunctionality('grid1', 1);
+      addEditFunctionality('grid2', 2);
+    }
+  } catch (error) {
+    console.error("加载数据失败:", error);
+  }
+}
+
 // 添加编辑功能
 function addEditFunctionality(gridId, tableId) {
   const grid = document.getElementById(gridId);
+  if (!grid) return;
+  
   grid.addEventListener('click', async (ev) => {
-    const cell = ev.target.closest('td'); // 点击的是单元格，而不是内部的div
-    if (!cell || !cell.classList.contains('cell')) return;
+    const cell = ev.target.closest('.cell');
+    if (!cell) return;
 
     const week = parseInt(cell.dataset.week);
     const day = cell.dataset.day;
@@ -108,7 +173,7 @@ function addEditFunctionality(gridId, tableId) {
 
     try {
       let scheduleObject;
-      if (objectId) {
+      if (objectId && objectId !== 'null') {
         // 更新现有记录
         scheduleObject = AV.Object.createWithoutData(ClassName, objectId);
       } else {
@@ -127,11 +192,14 @@ function addEditFunctionality(gridId, tableId) {
       if (statusDiv) statusDiv.textContent = newStatus === 'booked' ? '●' : '';
       cell.dataset.objectId = scheduleObject.id; // 更新 objectId
 
-      document.getElementById('saveStatus').innerText = '保存成功！';
-      setTimeout(() => {
-        document.getElementById('saveStatus').innerText = '点击单元格即可编辑，状态会自动保存到云端。';
-      }, 2000);
-
+      // 更新状态消息
+      const saveStatusEl = document.getElementById('saveStatus');
+      if (saveStatusEl) {
+        saveStatusEl.innerText = '保存成功！';
+        setTimeout(() => {
+          saveStatusEl.innerText = '点击单元格即可编辑，状态会自动保存到云端。';
+        }, 2000);
+      }
     } catch (error) {
       console.error("保存失败:", error);
       alert('保存到云端失败，请查看控制台日志。');
@@ -139,9 +207,9 @@ function addEditFunctionality(gridId, tableId) {
   });
 }
 
-// 初始化/重置当前周数据（管理员功能）
+// 初始化/重置当前周数据
 async function initCurrentWeekData(week) {
-  if (!confirm(`确定要初始化第 ${week} 周的数据吗？这将把本周所有时间段状态重置为“可预约”(free)。`)) {
+  if (!confirm(`确定要初始化第 ${week} 周的数据吗？这将把本周所有时间段状态重置为"可预约"(free)。`)) {
     return;
   }
 
@@ -149,17 +217,16 @@ async function initCurrentWeekData(week) {
     // 为两个表初始化数据
     for (let tableId of [1, 2]) {
       const ClassName = tableId === 1 ? 'Schedule1' : 'Schedule2';
-      // 1. 先检查是否已有本周数据
+      
+      // 删除现有数据
       const query = new AV.Query(ClassName);
       query.equalTo('week', week);
       const existingRecords = await query.find();
-
-      // 2. 如果已有记录，删除它们（可选，这里选择覆盖）
       if (existingRecords.length > 0) {
         await AV.Object.destroyAll(existingRecords);
       }
 
-      // 3. 创建新的 free 状态记录
+      // 创建新的 free 状态记录
       const newObjects = DAYS.map(day => {
         const obj = new AV.Object(ClassName);
         obj.set('week', week);
@@ -179,7 +246,32 @@ async function initCurrentWeekData(week) {
   }
 }
 
-// --- 以下为辅助函数，基本保持不变 ---
+// 重置所有数据
+async function resetAllData() {
+  try {
+    // 为两个表重置数据
+    for (let tableId of [1, 2]) {
+      const ClassName = tableId === 1 ? 'Schedule1' : 'Schedule2';
+      
+      // 获取所有记录
+      const query = new AV.Query(ClassName);
+      const allRecords = await query.find();
+      
+      // 删除所有记录
+      if (allRecords.length > 0) {
+        await AV.Object.destroyAll(allRecords);
+      }
+    }
+
+    alert('所有数据已重置成功！');
+    location.reload(); // 重新加载页面
+  } catch (error) {
+    console.error("重置数据失败:", error);
+    alert('重置数据失败，请查看控制台日志。');
+  }
+}
+
+// 辅助函数
 function weekStartDate(weekNumber) {
   const daysToAdd = (weekNumber - 1) * 7;
   const d = new Date(SEMESTER_START);
@@ -187,18 +279,3 @@ function weekStartDate(weekNumber) {
   d.setHours(0, 0, 0, 0);
   return d;
 }
-
-function calculateCurrentWeek() {
-  const now = new Date();
-  const start = new Date(SEMESTER_START);
-  const diffTime = now - start;
-  const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
-  return Math.max(1, Math.min(diffWeeks + 1, TOTAL_WEEKS)); // 限制在 1 到 TOTAL_WEEKS 之间
-}
-
-function isAdminPage() {
-  return window.location.pathname.endsWith('/admin.html') || window.location.pathname.endsWith('admin.html');
-}
-
-// 启动加载
-loadSchedule();
