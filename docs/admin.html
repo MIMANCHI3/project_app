@@ -1,81 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <title>管理员编辑</title>
-  <!-- 引入 LeanCloud SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
-  <style>
-    /* 管理员控制面板样式 */
-    .admin-controls {
-      text-align: center;
-      margin: 20px 0;
-      padding: 15px;
-      background-color: #f8f9fa;
-      border-radius: 8px;
-      border: 1px solid #e9ecef;
-    }
-    .admin-btn {
-      padding: 10px 20px;
-      margin: 0 10px;
-      border: none;
-      border-radius: 4px;
-      background-color: #4a90e2;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    .admin-btn:hover {
-      background-color: #357abd;
-    }
-    .admin-btn.reset {
-      background-color: #dc3545;
-    }
-    .admin-btn.reset:hover {
-      background-color: #c82333;
-    }
-    #saveStatus {
-      margin-top: 10px;
-      color: #666;
-      font-style: italic;
-      font-size: 14px;
-    }
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 20px;
-      border-radius: 4px;
-      background-color: #4caf50;
-      color: white;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      opacity: 0;
-      transition: opacity 0.3s;
-      z-index: 1000;
-    }
-    .notification.show {
-      opacity: 1;
-    }
-    .notification.error {
-      background-color: #dc3545;
-    }
-  </style>
 </head>
 <body>
   <h1>管理员编辑模式</h1>
 
-  <!-- 管理员控制面板 -->
-  <div class="admin-controls">
-    <button class="admin-btn" id="initBtn">初始化本周数据</button>
-    <button class="admin-btn reset" id="resetAllBtn">重置所有数据</button>
-    <div id="saveStatus">点击单元格即可编辑，状态会自动保存到云端。</div>
-  </div>
-
   <!-- 第一个表格 -->
-  <h2>ICC楼一层大厅</h2>
   <table id="schedule1">
     <thead>
       <tr>
@@ -93,7 +25,6 @@
   </table>
 
   <!-- 第二个表格 -->
-  <h2>ICC楼1-6层楼梯间</h2>
   <table id="schedule2">
     <thead>
       <tr>
@@ -110,9 +41,6 @@
     <tbody id="grid2"></tbody>
   </table>
 
-  <div class="notification" id="notification">更改已保存!</div>
-
-  <!-- 注意：script.js 需要在 LeanCloud SDK 之后引入 -->
   <script src="script.js"></script>
 </body>
 </html>
