@@ -3,6 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 引入 LeanCloud SDK -->
+    <script src="https://cdn1.lncld.net/static/js/3.18.2/av-min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
+    <script>
+  // 初始化 LeanCloud SDK
+      var APP_ID = 'YkGU3OKGHmv6fK3qYxuzWjLc-gzGzoHsz';
+      var APP_KEY = 'dvQRjtHtiUwxceLonRilMbWp';
+      var SERVER_URL = 'https://ykgu3okg.lc-cn-n1-shared.com'; // 国内版应用必须设置
+
+      AV.init({
+        appId: APP_ID,
+        appKey: APP_KEY,
+        serverURL: SERVER_URL
+      });
+    </script>
     <title>Project Admin</title>
     <style>
         * {
