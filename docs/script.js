@@ -1,142 +1,204 @@
-// script.js - 从 2025-09-01（星期一）开始，并自动填充第 1-22 周
-// 优先尝试后端 -> 再尝试相对静态文件 -> 回退到内嵌示例数据
+// script.js - 集成 LeanCloud
 
-const SEMESTER_START = new Date(2025, 8, 1); // 2025-09-01 (month 8 = September)
+// 初始化 LeanCloud SDK
+var APP_ID = 'YkGU3OKGHmv6fK3qYxuzWjLc-gzGzoHsz';
+var APP_KEY = 'dvQRjtHtiUwxceLonRilMbWp';
+var SERVER_URL = 'https://ykgu3okg.lc-cn-n1-shared.com';
+
+AV.init({
+  appId: APP_ID,
+  appKey: APP_KEY,
+  serverURL: SERVER_URL
+});
+
+const SEMESTER_START = new Date(2025, 8, 1);
 const TOTAL_WEEKS = 22;
+const DAYS = ['一', '二', '三', '四', '五', '六', '日'];
 
-// 内嵌示例数据（可选，用于在没有外部数据时显示一些预约样例）
-const EMBEDDED_SAMPLE = [
-  {"table_id":1,"week":3,"day":"一","status":"free"},
-  {"table_id":1,"week":3,"day":"二","status":"booked"},
-  {"table_id":1,"week":3,"day":"三","status":"free"},
-  {"table_id":1,"week":3,"day":"四","status":"free"},
-  {"table_id":1,"week":3,"day":"五","status":"booked"},
-  {"table_id":1,"week":3,"day":"六","status":"free"},
-  {"table_id":1,"week":3,"day":"日","status":"free"},
-  {"table_id":1,"week":4,"day":"一","status":"booked"},
-  {"table_id":1,"week":4,"day":"二","status":"free"},
-  {"table_id":1,"week":4,"day":"三","status":"free"},
-  {"table_id":1,"week":4,"day":"四","status":"free"},
-  {"table_id":1,"week":4,"day":"五","status":"free"},
-  {"table_id":1,"week":4,"day":"六","status":"booked"},
-  {"table_id":1,"week":4,"day":"日","status":"free"},
-  {"table_id":2,"week":3,"day":"一","status":"free"},
-  {"table_id":2,"week":3,"day":"二","status":"free"},
-  {"table_id":2,"week":3,"day":"三","status":"booked"},
-  {"table_id":2,"week":3,"day":"四","status":"free"},
-  {"table_id":2,"week":3,"day":"五","status":"free"},
-  {"table_id":2,"week":3,"day":"六","status":"free"},
-  {"table_id":2,"week":3,"day":"日","status":"booked"},
-  {"table_id":2,"week":4,"day":"一","status":"free"},
-  {"table_id":2,"week":4,"day":"二","status":"booked"},
-  {"table_id":2,"week":4,"day":"三","status":"free"},
-  {"table_id":2,"week":4,"day":"四","status":"free"},
-  {"table_id":2,"week":4,"day":"五","status":"free"},
-  {"table_id":2,"week":4,"day":"六","status":"free"},
-  {"table_id":2,"week":4,"day":"日","status":"free"}
-];
-
-
-
-async function fetchWithFallback() {
-  try {
-    const res2 = await fetch('./api/schedule.json', { cache: "no-store" });
-    if (res2.ok) return await res2.json();
-  } catch (e) {}
-
-  const stored = window.localStorage.getItem('mock_schedule');
-  if (stored) {
-    try { return JSON.parse(stored); } catch(e){}
-  }
-  return EMBEDDED_SAMPLE;
-}
-
-function weekStartDate(weekNumber) {
-  const d = new Date(SEMESTER_START);
-  d.setDate(d.getDate() + (weekNumber - 1) * 7);
-  d.setHours(0,0,0,0);
-  return d;
-}
-
+// 主加载函数
 async function loadSchedule() {
-  const data = await fetchWithFallback();
-  const scheduleData = Array.isArray(data) ? data : [];
+  // 获取当前周数（例如，第几周）
+  const currentWeek = calculateCurrentWeek();
+  document.getElementById('saveStatus').innerText = `当前是第 ${currentWeek} 周。点击单元格编辑，状态会自动保存。`;
 
-  const grid1 = document.getElementById('grid1');
-  grid1.innerHTML = '';
-  populateSchedule(grid1, scheduleData.filter(item => item.table_id === 1));
+  try {
+    // 并行获取两个表格的数据
+    const [data1, data2] = await Promise.all([
+      fetchDataFromLeanCloud(1),
+      fetchDataFromLeanCloud(2)
+    ]);
 
-  const grid2 = document.getElementById('grid2');
-  grid2.innerHTML = '';
-  populateSchedule(grid2, scheduleData.filter(item => item.table_id === 2));
+    renderSchedule('grid1', data1);
+    renderSchedule('grid2', data2);
 
-  if (window.location.pathname.endsWith('admin.html')) {
-    addEditFunctionality('grid1', 1, scheduleData);
-    addEditFunctionality('grid2', 2, scheduleData);
+    // 如果是管理员页面，添加编辑功能
+    if (isAdminPage()) {
+      addEditFunctionality('grid1', 1);
+      addEditFunctionality('grid2', 2);
+      document.getElementById('initBtn').addEventListener('click', () => initCurrentWeekData(currentWeek));
+    }
+  } catch (error) {
+    console.error("加载数据失败:", error);
+    alert('加载数据失败，请查看控制台日志或检查网络连接。');
   }
 }
 
-function populateSchedule(grid, data) {
+// 从 LeanCloud 获取数据
+async function fetchDataFromLeanCloud(tableId) {
+  const ClassName = tableId === 1 ? 'Schedule1' : 'Schedule2';
+  const query = new AV.Query(ClassName);
+  // 可以根据需要添加更多查询条件，例如只获取当前周或未来的数据以优化性能
+  // query.greaterThanOrEqualTo('week', currentWeek);
+  return await query.find();
+}
+
+// 渲染表格
+function renderSchedule(gridId, data) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+
   for (let week = 1; week <= TOTAL_WEEKS; week++) {
     const row = document.createElement('tr');
     row.innerHTML = `<td>第${week}周</td>`;
 
     const startDate = weekStartDate(week);
-    const days = ['一','二','三','四','五','六','日'];
 
-    days.forEach((day, index) => {
+    DAYS.forEach((day, index) => {
       const cellDate = new Date(startDate);
       cellDate.setDate(startDate.getDate() + index);
       const dateStr = `${cellDate.getMonth() + 1}/${cellDate.getDate()}`;
 
       const cell = document.createElement('td');
-      const status = data.find(d => d.week === week && d.day === day)?.status || 'free';
+      // 查找匹配的数据对象
+      const record = data.find(d => d.get('week') === week && d.get('day') === day);
+      const status = record ? record.get('status') : 'free';
+      const objectId = record ? record.id : null;
 
       cell.innerHTML = `
         <div class="date">${dateStr}</div>
         <div class="status">${status === 'booked' ? '●' : ''}</div>
       `;
       cell.className = `cell ${status}`;
+      // 存储标识信息，便于后续编辑
+      cell.dataset.week = week;
+      cell.dataset.day = day;
+      cell.dataset.objectId = objectId;
+      cell.dataset.tableId = gridId === 'grid1' ? 1 : 2;
+
       row.appendChild(cell);
     });
-
     grid.appendChild(row);
   }
 }
 
-function saveMockData(data) {
-  try { window.localStorage.setItem('mock_schedule', JSON.stringify(data)); } catch(e) {}
-}
-
-function addEditFunctionality(gridId, tableId, data) {
+// 添加编辑功能
+function addEditFunctionality(gridId, tableId) {
   const grid = document.getElementById(gridId);
-  grid.addEventListener('click', (ev) => {
-    const cell = ev.target.closest('.cell');
-    if (!cell) return;
-    const row = cell.parentNode;
-    const week = parseInt(row.firstChild.textContent.match(/\d+/)[0], 10);
-    const children = Array.from(row.children);
-    const idx = children.indexOf(cell);
-    const days = ['一','二','三','四','五','六','日'];
-    const day = days[idx - 1];
+  grid.addEventListener('click', async (ev) => {
+    const cell = ev.target.closest('td'); // 点击的是单元格，而不是内部的div
+    if (!cell || !cell.classList.contains('cell')) return;
 
-    const newStatus = cell.classList.contains('free') ? 'booked' : 'free';
-    cell.className = `cell ${newStatus}`;
-    const statusDiv = cell.querySelector('.status');
-    if (statusDiv) statusDiv.textContent = newStatus === 'booked' ? '●' : '';
+    const week = parseInt(cell.dataset.week);
+    const day = cell.dataset.day;
+    const currentStatus = cell.classList.contains('free') ? 'free' : 'booked';
+    const newStatus = currentStatus === 'free' ? 'booked' : 'free';
+    const objectId = cell.dataset.objectId;
+    const tableIdNum = parseInt(cell.dataset.tableId);
+    const ClassName = tableIdNum === 1 ? 'Schedule1' : 'Schedule2';
 
-    // 👉 GitHub Pages 没有后端，直接写入 localStorage
-    let localData = [];
     try {
-      const s = window.localStorage.getItem('mock_schedule');
-      localData = s ? JSON.parse(s) : (data || []);
-    } catch (err) { localData = (data || []); }
+      let scheduleObject;
+      if (objectId) {
+        // 更新现有记录
+        scheduleObject = AV.Object.createWithoutData(ClassName, objectId);
+      } else {
+        // 创建新记录
+        scheduleObject = new AV.Object(ClassName);
+        scheduleObject.set('week', week);
+        scheduleObject.set('day', day);
+        scheduleObject.set('table_id', tableIdNum);
+      }
+      scheduleObject.set('status', newStatus);
+      await scheduleObject.save();
 
-    const idx2 = localData.findIndex(d => d.table_id===tableId && d.week===week && d.day===day);
-    if (idx2 >= 0) localData[idx2].status = newStatus;
-    else localData.push({ table_id: tableId, week, day, status: newStatus });
-    saveMockData(localData);
+      // 更新 UI
+      cell.className = `cell ${newStatus}`;
+      const statusDiv = cell.querySelector('.status');
+      if (statusDiv) statusDiv.textContent = newStatus === 'booked' ? '●' : '';
+      cell.dataset.objectId = scheduleObject.id; // 更新 objectId
+
+      document.getElementById('saveStatus').innerText = '保存成功！';
+      setTimeout(() => {
+        document.getElementById('saveStatus').innerText = '点击单元格即可编辑，状态会自动保存到云端。';
+      }, 2000);
+
+    } catch (error) {
+      console.error("保存失败:", error);
+      alert('保存到云端失败，请查看控制台日志。');
+    }
   });
 }
 
+// 初始化/重置当前周数据（管理员功能）
+async function initCurrentWeekData(week) {
+  if (!confirm(`确定要初始化第 ${week} 周的数据吗？这将把本周所有时间段状态重置为“可预约”(free)。`)) {
+    return;
+  }
+
+  try {
+    // 为两个表初始化数据
+    for (let tableId of [1, 2]) {
+      const ClassName = tableId === 1 ? 'Schedule1' : 'Schedule2';
+      // 1. 先检查是否已有本周数据
+      const query = new AV.Query(ClassName);
+      query.equalTo('week', week);
+      const existingRecords = await query.find();
+
+      // 2. 如果已有记录，删除它们（可选，这里选择覆盖）
+      if (existingRecords.length > 0) {
+        await AV.Object.destroyAll(existingRecords);
+      }
+
+      // 3. 创建新的 free 状态记录
+      const newObjects = DAYS.map(day => {
+        const obj = new AV.Object(ClassName);
+        obj.set('week', week);
+        obj.set('day', day);
+        obj.set('status', 'free');
+        obj.set('table_id', tableId);
+        return obj;
+      });
+      await AV.Object.saveAll(newObjects);
+    }
+
+    alert(`第 ${week} 周数据初始化成功！`);
+    location.reload(); // 重新加载页面
+  } catch (error) {
+    console.error("初始化数据失败:", error);
+    alert('初始化数据失败，请查看控制台日志。');
+  }
+}
+
+// --- 以下为辅助函数，基本保持不变 ---
+function weekStartDate(weekNumber) {
+  const daysToAdd = (weekNumber - 1) * 7;
+  const d = new Date(SEMESTER_START);
+  d.setDate(d.getDate() + daysToAdd);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function calculateCurrentWeek() {
+  const now = new Date();
+  const start = new Date(SEMESTER_START);
+  const diffTime = now - start;
+  const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+  return Math.max(1, Math.min(diffWeeks + 1, TOTAL_WEEKS)); // 限制在 1 到 TOTAL_WEEKS 之间
+}
+
+function isAdminPage() {
+  return window.location.pathname.endsWith('/admin.html') || window.location.pathname.endsWith('admin.html');
+}
+
+// 启动加载
 loadSchedule();
