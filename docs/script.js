@@ -124,6 +124,7 @@ function saveMockData(data) {
 }
 
 // 编辑功能（事件委托）：点击单元格切换状态，尝试提交到后端，失败则回写 localStorage
+// 将原来的 addEditFunctionality 替换为下面内容
 function addEditFunctionality(gridId, tableId, data) {
   const grid = document.getElementById(gridId);
   grid.addEventListener('click', async (ev) => {
@@ -135,33 +136,48 @@ function addEditFunctionality(gridId, tableId, data) {
     const children = Array.from(row.children);
     const idx = children.indexOf(cell);
     const days = ['一','二','三','四','五','六','日'];
-    const day = days[idx - 1]; // 因为第0列是“第X周”标签
+    const day = days[idx - 1];
     const newStatus = cell.classList.contains('free') ? 'booked' : 'free';
+
+    // 先在界面上切换显示
     cell.className = `cell ${newStatus}`;
     const statusDiv = cell.querySelector('.status');
     if (statusDiv) statusDiv.textContent = newStatus === 'booked' ? '●' : '';
 
-    // 尝试发送到后端
-    try {
-      const res = await fetch('/api/update', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ table_id: tableId, week, day, status: newStatus })
-      });
-      if (!res.ok) throw new Error('server update failed');
-    } catch (e) {
-      // 回退：写入 localStorage（模拟持久化）
-      let localData = [];
+    // 如果你确实有后端可用则可以启用后端推送，否则直接回写 localStorage
+    // 判断是否在支持后端环境（默认为 false，在 GitHub Pages 推荐为 false）
+    const USE_BACKEND = false; // 若你有后端并部署好，请改为 true
+
+    if (USE_BACKEND) {
       try {
-        const s = window.localStorage.getItem('mock_schedule');
-        localData = s ? JSON.parse(s) : (data || []);
-      } catch (err) { localData = (data || []); }
-      const idx2 = localData.findIndex(d => d.table_id === tableId && d.week === week && d.day === day);
-      if (idx2 >= 0) localData[idx2].status = newStatus;
-      else localData.push({ table_id: tableId, week, day, status: newStatus });
-      saveMockData(localData);
+        const res = await fetch('./api/update', { // 使用相对路径更稳
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({table_id: tableId, week, day, status: newStatus})
+        });
+        if (!res.ok) throw new Error('server update failed');
+        // 可选：根据返回刷新数据或提示成功
+        return;
+      } catch (e) {
+        // 若后端失败，则落回到 localStorage
+        console.warn('Backend update failed, saving locally.', e);
+      }
     }
+
+    // 回退：写入 localStorage（按 table_id+week+day 覆盖或新增）
+    let localData = [];
+    try {
+      const s = window.localStorage.getItem('mock_schedule');
+      localData = s ? JSON.parse(s) : (data || []);
+    } catch (err) {
+      localData = (data || []);
+    }
+    const idx2 = localData.findIndex(d => d.table_id === tableId && d.week === week && d.day === day);
+    if (idx2 >= 0) localData[idx2].status = newStatus;
+    else localData.push({ table_id: tableId, week, day, status: newStatus });
+    try { window.localStorage.setItem('mock_schedule', JSON.stringify(localData)); } catch(e){}
   });
 }
+
 
 loadSchedule();
